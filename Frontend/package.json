@@ -11,5 +11,8 @@
   "description": "",
   "devDependencies": {
     "esbuild": "^0.25.2"
+  },
+  "dependencies": {
+    "lodash-es": "^4.17.21"
   }
 }
