@@ -41,7 +41,7 @@ def get_entries(request):
         redis.expire(my_key, CACHE_TTL_SECONDS)
         return JsonResponse({"success": cache}, status=200)
     except DayEntry.DoesNotExist:
-        return JsonResponse({"error": "No entry found"}, status=404)
+        return JsonResponse({"success": {}}, status=200)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -91,6 +91,6 @@ def write_entry(request):
             my_key, path, {"id": row_entry.id, "time": time, "entry": entry}
         )
         redis.expire(my_key, CACHE_TTL_SECONDS)
-        return JsonResponse({"success": "New Entry Created"}, status=200)
+        return JsonResponse({"success": "New Entry Created"}, status=201)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)

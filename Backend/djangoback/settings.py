@@ -43,6 +43,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     "Journal",
     "diary",
+    "todo",
     "authentication",
     "django.contrib.admin",
     "django.contrib.auth",
