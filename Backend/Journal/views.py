@@ -1,7 +1,9 @@
 import json
+import datetime
 
 # Create your views here.
 from django.http import JsonResponse
+from django.db.models import Count
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django_redis import get_redis_connection
@@ -69,9 +71,7 @@ def write_entry(request):
             return JsonResponse({"error": "Entry parameter is required"}, status=400)
 
         my_key = f"DiaryApp_{request.user.username}_journalentry_{str(date)}"
-        day_entry, created = DayEntry.objects.get_or_create(
-            user=request.user, date=date
-        )
+        day_entry, _ = DayEntry.objects.get_or_create(user=request.user, date=date)
         if redis.json().get(my_key) is None:
             redis.json().set(my_key, "$", {"entries": {}})
         if request.method == "PUT":
@@ -92,5 +92,48 @@ def write_entry(request):
         )
         redis.expire(my_key, CACHE_TTL_SECONDS)
         return JsonResponse({"success": "New Entry Created"}, status=201)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_entry(request):
+    try:
+        data = json.loads(request.body)
+        entry_id = data.get("id")
+        if not entry_id:
+            return JsonResponse({"error": "Entry parameter is required"}, status=400)
+
+        entry = RowEntry.objects.get(id=entry_id)
+        entry.delete()
+        return JsonResponse({"success": "Deleted Successfully"}, status=204)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def metrics(request):
+    end_date = datetime.date.today()
+    start_date = request.GET.get("date")
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "You don't have authorization"}, status=403)
+
+    if not start_date:
+        return JsonResponse({"error": "From Date parameter is required"}, status=400)
+
+    try:
+        data = (
+            DayEntry.objects.filter(
+                user=request.user, date__range=(start_date, end_date)
+            )
+            .annotate(num_entries=Count("entries"))
+            .values("date", "num_entries")
+            .order_by("date")
+        )
+        return JsonResponse({"success": data}, status=200)
+    except DayEntry.DoesNotExist:
+        return JsonResponse({"success": {}}, status=200)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
