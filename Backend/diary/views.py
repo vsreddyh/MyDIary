@@ -49,7 +49,7 @@ def write_entry(request):
         return JsonResponse({"error": "Date parameter is required"}, status=400)
 
     if not title:
-        return JsonResponse({"error": "Title parameter is required"}, status=400)
+        title = str(date)
 
     if not content:
         return JsonResponse({"error": "Content parameter is required"}, status=400)
@@ -57,7 +57,7 @@ def write_entry(request):
     my_key = "DiaryApp_" + request.user.username + "_diaryentry_" + str(date)
     entry_data = {"title": title, "entry": content, "date": date}
     try:
-        entry = Entry.objects.get(user=request.user, date=date)
+        entry = Entry.objects.create(user=request.user, date=date)
         entry.title = title
         entry.entry = content
         entry.save()

@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from todo.models import List
 
 
 @csrf_exempt
@@ -23,8 +24,8 @@ def create_user(request):
 
         is_first_user = User.objects.count() == 0
 
-        if User.objects.get(username=username).exists():
-            return JsonResponse({"error": "Username already exists"}, status=403)
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({"error": "Username already exists"}, status=409)
 
         if is_first_user or request.user.is_staff:
             user = User.objects.create_user(username=username, password=password)
@@ -33,10 +34,12 @@ def create_user(request):
                 user.is_staff = True
                 user.is_superuser = True
                 user.save()
-        return JsonResponse(
-            {"success": "Created Successfully", "admin": is_first_user},
-            status=201,
-        )
+            List.objects.create(user=user, listname="Tasks")
+            return JsonResponse(
+                {"success": "Created Successfully", "admin": is_first_user},
+                status=201,
+            )
+        return JsonResponse({"error": "Not authorized for operation"}, status=403)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -52,7 +55,7 @@ def delete_user(request):
         if not username:
             return JsonResponse({"error": "Username is required"}, status=400)
 
-        user = User.objects.get(username=username).first()
+        user = User.objects.filter(username=username).first()
 
         # if user.is_staff:
         #   return JsonResponse({"error": "Admin cannot be Deleted"}, status=500)
@@ -84,7 +87,7 @@ def rename_user(request):
         if not newusername:
             return JsonResponse({"error": "New Username is required"}, status=400)
 
-        user = User.objects.get(username=username)
+        user = User.objects.filter(username=username).first()
 
         if not user:
             return JsonResponse({"error": "User not found"}, status=403)
@@ -95,7 +98,7 @@ def rename_user(request):
         # if not request.user.is_authenticated or not request.user.is_staff:
         #   return JsonResponse({"error": "You don't have authorization for renaming"}, status=403)
 
-        if User.objects.get(username=newusername).exists():
+        if User.objects.filter(username=newusername).exists():
             return JsonResponse({"error": "Username is already taken"}, status=409)
 
         user.username = newusername
@@ -120,7 +123,7 @@ def change_password(request):
         if not newpassword:
             return JsonResponse({"error": "New Password is required"}, status=400)
 
-        user = User.objects.get(username=username)
+        user = User.objects.filter(username=username).first()
 
         if not user:
             return JsonResponse({"error": "User not found"}, status=403)
