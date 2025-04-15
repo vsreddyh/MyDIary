@@ -23,7 +23,7 @@ def create_user(request):
 
         is_first_user = User.objects.count() == 0
 
-        if User.objects.filter(username=username).exists():
+        if User.objects.get(username=username).exists():
             return JsonResponse({"error": "Username already exists"}, status=403)
 
         if is_first_user or request.user.is_staff:
@@ -52,7 +52,7 @@ def delete_user(request):
         if not username:
             return JsonResponse({"error": "Username is required"}, status=400)
 
-        user = User.objects.filter(username=username).first()
+        user = User.objects.get(username=username).first()
 
         # if user.is_staff:
         #   return JsonResponse({"error": "Admin cannot be Deleted"}, status=500)
@@ -84,7 +84,7 @@ def rename_user(request):
         if not newusername:
             return JsonResponse({"error": "New Username is required"}, status=400)
 
-        user = User.objects.filter(username=username).first()
+        user = User.objects.get(username=username)
 
         if not user:
             return JsonResponse({"error": "User not found"}, status=403)
@@ -95,7 +95,7 @@ def rename_user(request):
         # if not request.user.is_authenticated or not request.user.is_staff:
         #   return JsonResponse({"error": "You don't have authorization for renaming"}, status=403)
 
-        if User.objects.filter(username=newusername).exists():
+        if User.objects.get(username=newusername).exists():
             return JsonResponse({"error": "Username is already taken"}, status=409)
 
         user.username = newusername
@@ -120,7 +120,7 @@ def change_password(request):
         if not newpassword:
             return JsonResponse({"error": "New Password is required"}, status=400)
 
-        user = User.objects.filter(username=username).first()
+        user = User.objects.get(username=username)
 
         if not user:
             return JsonResponse({"error": "User not found"}, status=403)

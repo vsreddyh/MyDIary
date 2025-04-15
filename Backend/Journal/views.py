@@ -7,7 +7,7 @@ from django.db.models import Count
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django_redis import get_redis_connection
-from Journal.models import DayEntry, RowEntry
+from .models import DayEntry, RowEntry
 
 CACHE_TTL_SECONDS = 300
 

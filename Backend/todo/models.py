@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -6,7 +7,7 @@ from django.contrib.auth.models import User
 
 class List(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateField()
+    listname = models.CharField(max_length=30, default="Tasks")
 
 
 class Task(models.Model):
@@ -15,7 +16,17 @@ class Task(models.Model):
     name = models.CharField(max_length=20)
     repeat = models.BooleanField(default=False)
     description = models.TextField()
-    chain = models.ForeignKey("self", on_delete=models.CASCADE)
+    parent = models.ForeignKey("self", default=None, on_delete=models.CASCADE)
+    chain = models.ForeignKey("self", default=None, on_delete=models.CASCADE)
     priority = models.IntegerField()
-    time = models.TimeField()
+    start_time = models.TimeField()
+    deadline = models.DateTimeField()
     completed = models.BooleanField()
+
+    class Meta:
+        ordering = [
+            "-completed",
+            "date",
+            "start_time",
+            "-priority",
+        ]
