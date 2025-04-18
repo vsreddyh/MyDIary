@@ -15,18 +15,13 @@ from .models import List, Task
 def get_tasks_bylist(request):  # Fetch tasks of a given list
     try:
         listname = request.GET.get("list")
-        ordering = request.GET.get("order", "default")
-        if ordering == "priority":
-            tasks_qs = Task.objects.priority_first()
-        else:
-            tasks_qs = Task.objects.default_order()
         if not request.user.is_authenticated:
             return JsonResponse({"error": "You don't have authorization"}, status=403)
         if not listname:
             return JsonResponse({"error": "List parameter is required"}, status=400)
 
         userData = List.objects.get(user=request.user, listname=listname)
-        tasks = tasks_qs.filter(userData=userData, parent=None).values(
+        tasks = Task.objects.filter(userData=userData, parent=None).values(
             "id",
             "date",
             "name",
@@ -34,7 +29,6 @@ def get_tasks_bylist(request):  # Fetch tasks of a given list
             "description",
             "chain_id",
             "priority",
-            "start_time",
             "deadline",
             "completed",
         )
@@ -51,18 +45,15 @@ def get_tasks_bylist(request):  # Fetch tasks of a given list
 def get_tasks_bydate(request):  # Fetch tasks assigned to a given date
     try:
         date = request.GET.get("date")
-        ordering = request.GET.get("order", "default")
-        if ordering == "priority":
-            tasks_qs = Task.objects.priority_first()
-        else:
-            tasks_qs = Task.objects.default_order()
         if not request.user.is_authenticated:
             return JsonResponse({"error": "You don't have authorization"}, status=403)
         if not date:
             return JsonResponse({"error": "Date parameter is required"}, status=400)
 
         userLists = List.objects.filter(user=request.user)
-        tasks = tasks_qs.filter(userData__in=userLists, date=date, parent=None).values(
+        tasks = Task.objects.filter(
+            userData__in=userLists, date=date, parent=None
+        ).values(
             "id",
             "name",
             "userData__listname",
@@ -70,7 +61,6 @@ def get_tasks_bydate(request):  # Fetch tasks assigned to a given date
             "description",
             "chain_id",
             "priority",
-            "start_time",
             "deadline",
             "completed",
         )
@@ -131,7 +121,6 @@ def set_task(request):
             repeat=data.get("repeat"),
             description=data.get("description"),
             priority=data.get("priority"),
-            start_time=data.get("start_time"),
             deadline=data.get("deadline"),
         )
 
@@ -224,7 +213,6 @@ def add_child(request):
         child_description = data.get("description")
         child_priority = data.get("priority")
         child_date = data.get("date")
-        child_start_time = data.get("start_time")
         child_deadline = data.get("deadline")
         if not request.user.is_authenticated:
             return JsonResponse({"error": "You don't have authorization"}, status=403)
@@ -242,7 +230,6 @@ def add_child(request):
             date=child_date,
             description=child_description,
             priority=child_priority,
-            start_time=child_start_time,
             deadline=child_deadline,
             parent=task,
         )
@@ -269,31 +256,6 @@ def alter_priority(request):
 
         task = Task.objects.get(userData__user=request.user, id=data.get("taskid"))
         task.priority = data.get("priority")
-        task.save()
-        return JsonResponse({"success": "yes"}, status=200)
-
-    except Task.DoesNotExist:
-        return JsonResponse({"error": "Task not found"}, status=400)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-
-
-@csrf_exempt
-@require_http_methods(["PUT"])
-def alter_start_time(request):
-    try:
-        data = json.loads(request.body)
-        if not request.user.is_authenticated:
-            return JsonResponse({"error": "You don't have authorization"}, status=403)
-        if data.get("start_time") is None:
-            return JsonResponse(
-                {"error": "start time parameter is required"}, status=400
-            )
-        if data.get("taskid") is None:
-            return JsonResponse({"error": "TaskId parameter is required"}, status=400)
-
-        task = Task.objects.get(userData__user=request.user, id=data.get("taskid"))
-        task.start_time = data.get("start_time")
         task.save()
         return JsonResponse({"success": "yes"}, status=200)
 

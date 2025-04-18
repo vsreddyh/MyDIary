@@ -15,18 +15,6 @@ class List(models.Model):
     to_journal = models.BooleanField(default=False)
 
 
-class TaskManager(models.Manager):
-    def default_order(self):
-        return self.get_queryset().order_by(
-            "-completed", "date", "start_time", "-priority"
-        )
-
-    def priority_first(self):
-        return self.get_queryset().order_by(
-            "-completed", "date", "-priority", "start_time"
-        )
-
-
 class Task(models.Model):
     PRIORITY_LEVELS = [(i, f"Level {i}") for i in range(1, 11)]
 
@@ -46,11 +34,9 @@ class Task(models.Model):
         related_name="parenttask",
     )  # child tasks
     priority = models.IntegerField(default=5, choices=PRIORITY_LEVELS)
-    start_time = models.TimeField(null=True, blank=True)
     deadline = models.DateTimeField(null=True, blank=True)
     completed = models.BooleanField(default=False)
     completed_at = models.DateField(null=True, blank=True)
-    objects = TaskManager()
 
     def clean(self):
         if self.repeat:
@@ -60,12 +46,7 @@ class Task(models.Model):
                 )
 
     class Meta:
-        ordering = [
-            "completed",
-            "date",
-            "start_time",
-            "-priority",
-        ]
+        ordering = ["completed", "date", "-priority", "deadline"]
         indexes = [
             models.Index(fields=["userData"]),
             models.Index(fields=["date"]),
