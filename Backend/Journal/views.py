@@ -1,8 +1,8 @@
 import json
-import datetime
 
 # Create your views here.
 from django.http import JsonResponse
+from django.utils import timezone
 from django.db.models import Count
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -74,6 +74,8 @@ def write_entry(request):
         day_entry, _ = DayEntry.objects.get_or_create(user=request.user, date=date)
         if redis.json().get(my_key) is None:
             redis.json().set(my_key, "$", {"entries": {}})
+        day_entry.last_modified = timezone.now()
+        day_entry.save()
         if request.method == "PUT":
             row_entry = RowEntry.objects.get(day=day_entry, id=entry_id)
             row_entry.time = time
@@ -105,9 +107,12 @@ def delete_entry(request):
         if not entry_id:
             return JsonResponse({"error": "Entry parameter is required"}, status=400)
 
-        entry = RowEntry.objects.get(id=entry_id)
+        entry = RowEntry.objects.get(day__user=request.user, id=entry_id)
+        day_entry = entry.day
+        day_entry.last_modified = timezone.now()
+        day_entry.save()
         entry.delete()
-        return JsonResponse({"success": "Deleted Successfully"}, status=204)
+        return JsonResponse({"success": "Deleted Successfully"}, status=200)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 

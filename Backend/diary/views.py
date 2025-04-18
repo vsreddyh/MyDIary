@@ -40,7 +40,6 @@ def get_entry(request):
 def write_entry(request):
     data = json.loads(request.body)
     date = data.get("date")
-    title = data.get("title")
     content = data.get("content")
     if not request.user.is_authenticated:
         return JsonResponse({"error": "You don't have authorization"}, status=403)
@@ -48,23 +47,19 @@ def write_entry(request):
     if not date:
         return JsonResponse({"error": "Date parameter is required"}, status=400)
 
-    if not title:
-        title = str(date)
-
     if not content:
         return JsonResponse({"error": "Content parameter is required"}, status=400)
 
     my_key = "DiaryApp_" + request.user.username + "_diaryentry_" + str(date)
-    entry_data = {"title": title, "entry": content, "date": date}
+    entry_data = {"entry": content, "date": date}
     try:
         entry = Entry.objects.create(user=request.user, date=date)
-        entry.title = title
         entry.entry = content
         entry.save()
         cache.set(my_key, entry_data, timeout=60 * 60)
         return JsonResponse({"success": "Saved Entry"}, status=200)
     except Entry.DoesNotExist:
-        Entry.objects.create(user=request.user, date=date, title=title, entry=content)
+        Entry.objects.create(user=request.user, date=date, entry=content)
         cache.set(my_key, entry_data, timeout=60 * 60)
         return JsonResponse({"success": "New Entry Created"}, status=200)
     except Exception as e:
