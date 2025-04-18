@@ -48,6 +48,52 @@ def get_entries(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+def todo_to_entry(date, time, entry, user):
+    try:
+        redis = get_redis_connection("default")
+        if not date:
+            return {"error": "Date parameter is required", "status": 400}
+
+        if not time:
+            return {"error": "Time parameter is required", "status": 400}
+
+        if not entry:
+            return {"error": "Entry parameter is required", "status": 400}
+
+        my_key = f"DiaryApp_{user.username}_journalentry_{str(date)}"
+        day_entry, _ = DayEntry.objects.get_or_create(user=user, date=date)
+        if redis.json().get(my_key) is None:
+            redis.json().set(my_key, "$", {"entries": {}})
+        day_entry.last_modified = timezone.now()
+        day_entry.save()
+        row_entry = RowEntry.objects.create(day=day_entry, time=time, entry=entry)
+        path = f"$.entries.{row_entry.id}"
+        redis.json().set(
+            my_key, path, {"id": row_entry.id, "time": time, "entry": entry}
+        )
+        redis.expire(my_key, CACHE_TTL_SECONDS)
+        return {"success": "New Entry Created", "entry_id": row_entry, "status": 201}
+    except Exception as e:
+        return {"error": str(e), "status": 500}
+
+
+def delete_entry_from_todo(user, entry_id):
+    try:
+        if not entry_id:
+            return {"error": "Entry parameter is required", "status": 400}
+
+        entry = RowEntry.objects.get(day__user=user, id=entry_id)
+        day_entry = entry.day
+        day_entry.last_modified = timezone.now()
+        day_entry.save()
+        entry.delete()
+        return {"success": "Deleted Successfully", "status": 200}
+    except RowEntry.DoesNotExist:
+        return {"success": "Already Deleted", "status": 200}
+    except Exception as e:
+        return {"error": str(e), "status": 500}
+
+
 @csrf_exempt
 @require_http_methods(["POST", "PUT"])
 def write_entry(request):
