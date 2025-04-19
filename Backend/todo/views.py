@@ -4,14 +4,12 @@ from datetime import date, datetime
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.forms.models import model_to_dict
 from Journal.views import todo_to_entry, delete_entry_from_todo
 from .models import List, Task
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def get_tasks_bylist(request):  # Fetch tasks of a given list
     try:
@@ -41,7 +39,6 @@ def get_tasks_bylist(request):  # Fetch tasks of a given list
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def get_tasks_bydate(request):  # Fetch tasks assigned to a given date
     try:
@@ -70,7 +67,6 @@ def get_tasks_bydate(request):  # Fetch tasks assigned to a given date
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def get_lists(request):  # Fetch lists of given user
     try:
@@ -85,7 +81,6 @@ def get_lists(request):  # Fetch lists of given user
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def get_task(request):  # Fetch a single task
     try:
@@ -102,7 +97,6 @@ def get_task(request):  # Fetch a single task
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def set_task(request):
     try:
@@ -137,7 +131,6 @@ def set_task(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["PUT"])
 def rename(request):
     try:
@@ -160,7 +153,6 @@ def rename(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["PUT"])
 def alter_date(request):
     try:
@@ -189,7 +181,6 @@ def alter_date(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["PUT"])
 def alter_repeat(request):
     try:
@@ -220,7 +211,6 @@ def alter_repeat(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["PUT"])
 def alter_description(request):
     try:
@@ -243,7 +233,6 @@ def alter_description(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["DELETE"])
 def delete_task(request):
     try:
@@ -263,7 +252,6 @@ def delete_task(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["PUT"])
 def add_child(request):
     try:
@@ -306,7 +294,6 @@ def add_child(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["PUT"])
 def alter_priority(request):
     try:
@@ -329,7 +316,6 @@ def alter_priority(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["PUT"])
 def alter_deadline(request):
     try:
@@ -352,7 +338,6 @@ def alter_deadline(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def get_overdue_tasks_count(request):
     try:
@@ -367,7 +352,6 @@ def get_overdue_tasks_count(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def check_task(request):
     try:
@@ -401,7 +385,6 @@ def check_task(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def uncheck_task(request):
     try:
@@ -413,12 +396,11 @@ def uncheck_task(request):
         task=Task.objects.get(userData__user=request.user,id=data.get("taskid"))
         list=List.objects.get(id=task.id)
         newtask=task.child
-        if newtask is None:
-            if newtask.completed=True:
-                return JsonResponse({"error":res.get("error")},status=res.get("status"))
-            else:
-                newtask.active=False
-                newtask.save()
+        if newtask is not None:
+            if newtask.completed:
+                return JsonResponse({"error":"Uncheck child tasks first"},status=400)
+            newtask.active=False
+            newtask.save()
         if list.to_journal:
             res=delete_entry_from_todo(request.user,task.journalid)
             if res.get("status")!=200:

@@ -4,7 +4,6 @@ import json
 from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Count
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django_redis import get_redis_connection
 from .models import DayEntry, RowEntry
@@ -12,7 +11,6 @@ from .models import DayEntry, RowEntry
 CACHE_TTL_SECONDS = 300
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def get_entries(request):
     redis = get_redis_connection("default")
@@ -94,7 +92,6 @@ def delete_entry_from_todo(user, entry_id):
         return {"error": str(e), "status": 500}
 
 
-@csrf_exempt
 @require_http_methods(["POST", "PUT"])
 def write_entry(request):
     try:
@@ -144,7 +141,6 @@ def write_entry(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["DELETE"])
 def delete_entry(request):
     try:
@@ -163,7 +159,6 @@ def delete_entry(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def metrics(request):
     end_date = datetime.date.today()

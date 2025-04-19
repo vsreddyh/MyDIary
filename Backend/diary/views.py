@@ -3,14 +3,12 @@ import json
 # Create your views here.
 from django.contrib.auth.models import User
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.forms.models import model_to_dict
 from .models import Entry
 from django.core.cache import cache
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def get_entry(request):
     date = request.GET.get("date")
@@ -35,7 +33,6 @@ def get_entry(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def write_entry(request):
     data = json.loads(request.body)

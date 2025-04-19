@@ -4,12 +4,10 @@ import json
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from todo.models import List
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def create_user(request):
     try:
@@ -45,7 +43,6 @@ def create_user(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["DELETE"])
 def delete_user(request):
     try:
@@ -73,7 +70,6 @@ def delete_user(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["PUT"])
 def rename_user(request):
     try:
@@ -109,7 +105,6 @@ def rename_user(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["PUT"])
 def change_password(request):
     try:
@@ -142,7 +137,6 @@ def change_password(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def login_user(request):
     try:
@@ -168,7 +162,6 @@ def login_user(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def is_admin(request):
     try:
@@ -180,7 +173,6 @@ def is_admin(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def has_session(request):
     try:
@@ -192,7 +184,6 @@ def has_session(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def logout_user(request):
     try:
